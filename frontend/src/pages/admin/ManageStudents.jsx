@@ -16,6 +16,7 @@ const ManageStudents = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    admissionNo: '',
     classIds: []
   })
 
@@ -33,7 +34,7 @@ const ManageStudents = () => {
     }
     setShowModal(false)
     setEditingStudent(null)
-    setFormData({ name: '', email: '', classIds: [] })
+    setFormData({ name: '', email: '', admissionNo: '', classIds: [] })
     dispatch(getAllStudents())
   }
 
@@ -42,6 +43,7 @@ const ManageStudents = () => {
     setFormData({
       name: student.name,
       email: student.email,
+      admissionNo: student.admissionNo || '',
       classIds: student.classIds.map(c => c._id || c)
     })
     setShowModal(true)
@@ -57,7 +59,7 @@ const ManageStudents = () => {
   const handleClose = () => {
     setShowModal(false)
     setEditingStudent(null)
-    setFormData({ name: '', email: '', classIds: [] })
+    setFormData({ name: '', email: '', admissionNo: '', classIds: [] })
   }
 
   return (
@@ -89,6 +91,9 @@ const ManageStudents = () => {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Admission No
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -104,6 +109,9 @@ const ManageStudents = () => {
                 <tr key={student._id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {student.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {student.admissionNo || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {student.email}
@@ -163,6 +171,20 @@ const ManageStudents = () => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100"
                 />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Admission Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.admissionNo}
+                  onChange={(e) => setFormData({ ...formData, admissionNo: e.target.value })}
+                  placeholder="Enter student card number (e.g., AI2024015)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+                <p className="text-xs text-gray-500 mt-1">Student's ID card number (required for research data)</p>
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">

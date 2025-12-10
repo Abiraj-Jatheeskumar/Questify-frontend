@@ -55,7 +55,11 @@ const AssignQuestions = () => {
     }
     
     try {
-      await dispatch(assignQuestions(formData))
+      const assignmentData = {
+        ...formData,
+        title: assignmentTitle.trim() || undefined // Send title if provided
+      }
+      await dispatch(assignQuestions(assignmentData))
       setSuccessMessage(`✓ Successfully assigned ${formData.questionIds.length} question(s) to the class!`)
       setFormData({ classId: '', questionIds: [] })
       setSearchQuery('')

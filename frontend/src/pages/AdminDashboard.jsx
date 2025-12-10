@@ -5,6 +5,7 @@ import ManageClasses from './admin/ManageClasses'
 import ManageQuestions from './admin/ManageQuestions'
 import AssignQuestions from './admin/AssignQuestions'
 import ViewResponses from './admin/ViewResponses'
+import Analytics from './admin/Analytics'
 
 const AdminDashboard = () => {
   return (
@@ -12,12 +13,13 @@ const AdminDashboard = () => {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Routes>
+          <Route path="analytics" element={<Analytics />} />
           <Route path="students" element={<ManageStudents />} />
           <Route path="classes" element={<ManageClasses />} />
           <Route path="questions" element={<ManageQuestions />} />
           <Route path="assign" element={<AssignQuestions />} />
           <Route path="responses" element={<ViewResponses />} />
-          <Route path="*" element={<ManageStudents />} />
+          <Route path="*" element={<Analytics />} />
         </Routes>
       </div>
     </div>

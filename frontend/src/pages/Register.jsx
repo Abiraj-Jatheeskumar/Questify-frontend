@@ -9,6 +9,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    admissionNo: '',
     password: '',
     confirmPassword: '',
   });
@@ -64,10 +65,17 @@ const Register = () => {
       return;
     }
 
+    // Validate admission number
+    if (!formData.admissionNo.trim()) {
+      setValidationError('Student ID / Admission Number is required');
+      return;
+    }
+
     // Dispatch register action - All users register as students
     const result = await dispatch(register({
       name: formData.name,
       email: formData.email,
+      admissionNo: formData.admissionNo,
       password: formData.password,
       role: 'student' // Fixed role as student
     }));
@@ -78,6 +86,7 @@ const Register = () => {
       setFormData({
         name: '',
         email: '',
+        admissionNo: '',
         password: '',
         confirmPassword: '',
       });
@@ -87,28 +96,31 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 sm:p-8 font-sans">
-      <div className="flex w-full max-w-6xl overflow-hidden rounded-2xl shadow-2xl bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-4 sm:p-8 font-sans">
+      <div className="flex w-full max-w-6xl overflow-visible rounded-3xl shadow-2xl bg-white border-2 border-purple-100">
 
         {/* Left Side: Register Form */}
         <div className="w-full lg:w-1/2 p-6 sm:p-10 md:p-16 flex flex-col justify-center animate-fadeInLeft">
-          <div className="text-center lg:text-left">
-            <div className="text-3xl font-extrabold text-blue-600 mb-2 tracking-tight">
-              Questify
+          <div className="text-center lg:text-left mb-6">
+            <div className="text-4xl font-black bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent mb-3 tracking-tight">
+              🎯 Questify
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900">
-              Student Registration
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
+              Join the Journey!
             </h2>
-            <p className="mt-2 text-md text-gray-600">
-              Join as a student and start learning today
+            <p className="text-md text-gray-600 leading-relaxed">
+              Create your account and start learning today 🚀
             </p>
           </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
 
             {/* Name Input */}
             <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="name" className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
+                </svg>
                 Full Name
               </label>
               <input
@@ -119,14 +131,18 @@ const Register = () => {
                 required
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
+                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 shadow-sm text-sm sm:text-base"
                 placeholder="John Doe"
               />
             </div>
 
             {/* Email Input */}
             <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                </svg>
                 Email Address
               </label>
               <input
@@ -137,14 +153,43 @@ const Register = () => {
                 required
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
+                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm text-sm sm:text-base"
                 placeholder="your.email@example.com"
               />
             </div>
 
+            {/* Admission Number Input */}
+            <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
+              <label htmlFor="admissionNo" className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clipRule="evenodd"/>
+                </svg>
+                Student ID / Admission Number
+              </label>
+              <input
+                id="admissionNo"
+                name="admissionNo"
+                type="text"
+                required
+                value={formData.admissionNo}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 shadow-sm text-sm sm:text-base"
+                placeholder="e.g., AI2024015"
+              />
+              <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                </svg>
+                Use your student ID card number
+              </p>
+            </div>
+
             {/* Password Input */}
             <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+                </svg>
                 Password
               </label>
               <input
@@ -155,7 +200,7 @@ const Register = () => {
                 required
                 value={formData.password}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
+                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200 shadow-sm text-sm sm:text-base"
                 placeholder="••••••••"
               />
               <p className="text-xs text-gray-600 mt-1">Minimum 6 characters</p>
@@ -163,7 +208,10 @@ const Register = () => {
 
             {/* Confirm Password Input */}
             <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                </svg>
                 Confirm Password
               </label>
               <input
@@ -174,7 +222,7 @@ const Register = () => {
                 required
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
+                className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200 shadow-sm text-sm sm:text-base"
                 placeholder="••••••••"
               />
             </div>
@@ -184,8 +232,17 @@ const Register = () => {
 
             {/* Error Messages */}
             {(validationError || error) && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm animate-pulse">
-                {validationError || error}
+              <div className="rounded-xl bg-gradient-to-r from-red-50 to-orange-50 p-4 shadow-lg border-2 border-red-300">
+                <div className="flex items-start gap-3">
+                  <svg className="h-6 w-6 text-red-600 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <h3 className="text-sm font-bold text-red-800">
+                      {validationError || error}
+                    </h3>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -194,17 +251,32 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                className="w-full flex justify-center items-center gap-2 py-4 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 hover:from-purple-700 hover:via-blue-700 hover:to-pink-700 focus:outline-none focus:ring-4 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:transform-none"
               >
-                {loading ? 'Creating Student Account...' : 'Create Student Account'}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Creating Your Account...
+                  </>
+                ) : (
+                  <>
+                    Create Student Account
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                    </svg>
+                  </>
+                )}
               </button>
             </div>
 
             {/* Login Link */}
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-gray-700">
               Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700">
-                Sign in here
+              <Link to="/login" className="font-bold text-transparent bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text hover:from-purple-700 hover:to-blue-700 transition-all duration-200">
+                Sign in here →
               </Link>
             </p>
           </form>

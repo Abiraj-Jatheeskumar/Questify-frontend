@@ -42,6 +42,9 @@ const Navbar = () => {
               <div className="ml-8 flex space-x-4">
                 {user.role === 'admin' ? (
                   <>
+                    <Link to="/admin/analytics" className={navHoverClass}>
+                      Analytics
+                    </Link>
                     <Link to="/admin/students" className={navHoverClass}>
                       Students
                     </Link>
@@ -52,7 +55,7 @@ const Navbar = () => {
                       Questions
                     </Link>
                     <Link to="/admin/assign" className={navHoverClass}>
-                      Assign Questions
+                      Assign
                     </Link>
                     <Link to="/admin/responses" className={navHoverClass}>
                       Responses
@@ -133,6 +136,13 @@ const Navbar = () => {
           {user.role === 'admin' ? (
             <>
               <Link
+                to="/admin/analytics"
+                className="block px-3 py-2 rounded hover:bg-blue-700"
+                onClick={closeMenu}
+              >
+                📊 Analytics
+              </Link>
+              <Link
                 to="/admin/students"
                 className="block px-3 py-2 rounded hover:bg-blue-700"
                 onClick={closeMenu}
@@ -158,7 +168,7 @@ const Navbar = () => {
                 className="block px-3 py-2 rounded hover:bg-blue-700"
                 onClick={closeMenu}
               >
-                Assign Questions
+                Assign
               </Link>
               <Link
                 to="/admin/responses"
