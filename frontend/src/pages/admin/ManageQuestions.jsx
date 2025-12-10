@@ -18,7 +18,9 @@ const ManageQuestions = () => {
     question: '',
     options: ['', '', '', '', ''],
     correctAnswer: 0,
-    imageUrl: ''
+    subject: '',
+    imageUrl: '',
+    classIds: []
   })
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imageError, setImageError] = useState(null)
@@ -32,24 +34,30 @@ const ManageQuestions = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (editingQuestion) {
-      await dispatch(updateQuestion({ id: editingQuestion._id, ...formData }))
-    } else {
-      await dispatch(createQuestion(formData))
+    try {
+      if (editingQuestion) {
+        await dispatch(updateQuestion({ id: editingQuestion._id, ...formData })).unwrap()
+      } else {
+        await dispatch(createQuestion(formData)).unwrap()
+      }
+      setShowModal(false)
+      setEditingQuestion(null)
+      setFormData({
+        question: '',
+        options: ['', '', '', '', ''],
+        correctAnswer: 0,
+        subject: '',
+        imageUrl: '',
+        classIds: []
+      })
+      setImageError(null)
+      setImageStatus('')
+      // Refresh the questions list
+      await dispatch(getAllQuestions())
+    } catch (error) {
+      console.error('Error saving question:', error)
+      alert('Failed to save question: ' + (error || 'Unknown error'))
     }
-    setShowModal(false)
-    setEditingQuestion(null)
-    setFormData({
-      question: '',
-      options: ['', '', '', ''],
-      correctAnswer: 0,
-      subject: '',
-      imageUrl: '',
-      classIds: []
-    })
-    setImageError(null)
-    setImageStatus('')
-    dispatch(getAllQuestions())
   }
 
   const handleEdit = (question) => {
@@ -58,7 +66,9 @@ const ManageQuestions = () => {
       question: question.question,
       options: question.options,
       correctAnswer: question.correctAnswer,
-      imageUrl: question.imageUrl || ''
+      subject: question.subject || '',
+      imageUrl: question.imageUrl || '',
+      classIds: question.classIds?.map(cls => cls._id || cls) || []
     })
     setShowModal(true)
   }
@@ -77,7 +87,9 @@ const ManageQuestions = () => {
       question: '',
       options: ['', '', '', '', ''],
       correctAnswer: 0,
-      imageUrl: ''
+      subject: '',
+      imageUrl: '',
+      classIds: []
     })
     setImageError(null)
     setImageStatus('')
