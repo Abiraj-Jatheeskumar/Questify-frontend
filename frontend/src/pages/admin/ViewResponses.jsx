@@ -86,7 +86,8 @@ const ViewResponses = () => {
   const calculateAverageResponseTime = () => {
     if (responses.length === 0) return 0
     const total = responses.reduce((sum, r) => sum + (r.responseTime || 0), 0)
-    return Math.round(total / responses.length)
+    const avgMs = total / responses.length
+    return (avgMs / 1000).toFixed(2) // Convert milliseconds to seconds
   }
 
   const calculateAccuracy = () => {
@@ -289,7 +290,7 @@ const ViewResponses = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {response.responseTime}s
+                      {(response.responseTime / 1000).toFixed(2)}s
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(response.answeredAt).toLocaleDateString()}
