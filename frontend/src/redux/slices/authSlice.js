@@ -4,9 +4,15 @@ import api from '../../services/api'
 // Register
 export const register = createAsyncThunk(
   'auth/register',
-  async ({ name, email, password, role }, { rejectWithValue }) => {
+  async ({ name, email, password, role, admissionNo }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/register', { name, email, password, role })
+      const response = await api.post('/auth/register', { 
+        name, 
+        email, 
+        password, 
+        role,
+        admissionNo 
+      })
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Registration failed')

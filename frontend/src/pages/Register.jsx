@@ -81,7 +81,8 @@ const Register = () => {
     }));
 
     // If registration is successful, navigate to login
-    if (result.payload && !error) {
+    // Check if the action was fulfilled (not rejected) by checking result.type
+    if (result.type === 'auth/register/fulfilled' && result.payload) {
       // Reset form
       setFormData({
         name: '',

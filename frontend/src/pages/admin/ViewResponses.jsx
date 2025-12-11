@@ -13,6 +13,7 @@ const ViewResponses = () => {
   })
   const [assignments, setAssignments] = useState([])
   const [exporting, setExporting] = useState(false)
+  const [expandedQuiz, setExpandedQuiz] = useState(null)
 
   useEffect(() => {
     dispatch(getAllClasses())
@@ -223,6 +224,186 @@ const ViewResponses = () => {
     return Math.round((correct / responses.length) * 100)
   }
 
+  // Group responses by quiz/assignment
+  const groupResponsesByQuiz = () => {
+    const grouped = {}
+    responses.forEach(response => {
+      const quizId = response.assignedQuestionId?._id || response.assignedQuestionId || 'unassigned'
+      const quizTitle = response.assignedQuestionId?.title || 'Unassigned Quiz'
+      const quizNumber = response.assignedQuestionId?.quizNumber || null
+      
+      if (!grouped[quizId]) {
+        grouped[quizId] = {
+          id: quizId,
+          title: quizTitle,
+          quizNumber: quizNumber,
+          responses: [],
+          questionIds: new Set(),
+          studentIds: new Set()
+        }
+      }
+      grouped[quizId].responses.push(response)
+      if (response.questionId?._id) {
+        grouped[quizId].questionIds.add(response.questionId._id.toString())
+      }
+      if (response.studentId?._id) {
+        grouped[quizId].studentIds.add(response.studentId._id.toString())
+      }
+    })
+    return Object.values(grouped)
+  }
+
+  // Calculate detailed analytics for a specific quiz
+  const calculateDetailedQuizAnalytics = (quiz, assignment) => {
+    if (quiz.responses.length === 0) {
+      return {
+        totalQuestions: assignment?.questionIds?.length || 0,
+        totalResponses: 0,
+        totalStudents: 0,
+        completionRate: 0,
+        accuracy: 0,
+        avgResponseTime: 0,
+        avgQuizTime: 0,
+        correctCount: 0,
+        incorrectCount: 0,
+        questionStats: [],
+        studentQuizTimes: []
+      }
+    }
+
+    const totalQuestions = assignment?.questionIds?.length || quiz.questionIds.size
+    const totalStudents = quiz.studentIds.size
+    const totalResponses = quiz.responses.length
+    const expectedResponses = totalQuestions * totalStudents
+    const completionRate = expectedResponses > 0 
+      ? Math.round((totalResponses / expectedResponses) * 100) 
+      : 0
+
+    const correct = quiz.responses.filter(r => r.isCorrect).length
+    const accuracy = Math.round((correct / totalResponses) * 100)
+    
+    // Calculate average response time per question (convert ms to seconds)
+    const totalTime = quiz.responses.reduce((sum, r) => sum + ((r.responseTime || 0) / 1000), 0)
+    const avgTime = totalTime > 0 ? (totalTime / totalResponses).toFixed(2) : 0
+
+    // Calculate total quiz time per student (from first to last question)
+    const studentQuizTimesMap = {}
+    quiz.responses.forEach(response => {
+      const studentId = response.studentId?._id?.toString() || 'unknown'
+      const answeredAt = new Date(response.answeredAt).getTime()
+      
+      if (!studentQuizTimesMap[studentId]) {
+        studentQuizTimesMap[studentId] = {
+          studentId: studentId,
+          studentName: response.studentId?.name || 'Unknown',
+          firstAnswerTime: answeredAt,
+          lastAnswerTime: answeredAt,
+          questionCount: 0
+        }
+      }
+      
+      studentQuizTimesMap[studentId].firstAnswerTime = Math.min(
+        studentQuizTimesMap[studentId].firstAnswerTime,
+        answeredAt
+      )
+      studentQuizTimesMap[studentId].lastAnswerTime = Math.max(
+        studentQuizTimesMap[studentId].lastAnswerTime,
+        answeredAt
+      )
+      studentQuizTimesMap[studentId].questionCount++
+    })
+
+    // Convert to array and calculate total quiz time for each student
+    const studentQuizTimes = Object.values(studentQuizTimesMap).map(student => {
+      const totalQuizTimeMs = student.lastAnswerTime - student.firstAnswerTime
+      const totalQuizTimeSec = (totalQuizTimeMs / 1000).toFixed(2)
+      return {
+        ...student,
+        totalQuizTimeMs,
+        totalQuizTimeSec: parseFloat(totalQuizTimeSec),
+        formattedTime: formatQuizTime(totalQuizTimeMs)
+      }
+    })
+
+    // Calculate average quiz completion time across all students
+    const totalQuizTimeSum = studentQuizTimes.reduce((sum, s) => sum + s.totalQuizTimeSec, 0)
+    const avgQuizTime = studentQuizTimes.length > 0 
+      ? (totalQuizTimeSum / studentQuizTimes.length).toFixed(2) 
+      : 0
+
+    // Per-question statistics
+    const questionStatsMap = {}
+    quiz.responses.forEach(response => {
+      const qId = response.questionId?._id?.toString() || 'unknown'
+      const questionText = response.questionId?.question || 'Unknown Question'
+      
+      if (!questionStatsMap[qId]) {
+        questionStatsMap[qId] = {
+          questionId: qId,
+          questionText: questionText,
+          totalResponses: 0,
+          correctResponses: 0,
+          incorrectResponses: 0,
+          totalTime: 0,
+          answerDistribution: { 0: 0, 1: 0, 2: 0, 3: 0 }
+        }
+      }
+      
+      questionStatsMap[qId].totalResponses++
+      if (response.isCorrect) {
+        questionStatsMap[qId].correctResponses++
+      } else {
+        questionStatsMap[qId].incorrectResponses++
+      }
+      questionStatsMap[qId].totalTime += (response.responseTime || 0) / 1000
+      questionStatsMap[qId].answerDistribution[response.selectedAnswer] = 
+        (questionStatsMap[qId].answerDistribution[response.selectedAnswer] || 0) + 1
+    })
+
+    // Convert to array and calculate percentages
+    const questionStats = Object.values(questionStatsMap).map(stat => ({
+      ...stat,
+      accuracy: stat.totalResponses > 0 
+        ? Math.round((stat.correctResponses / stat.totalResponses) * 100) 
+        : 0,
+      avgTime: stat.totalResponses > 0 
+        ? (stat.totalTime / stat.totalResponses).toFixed(2) 
+        : 0,
+      difficulty: stat.totalResponses > 0 
+        ? (stat.correctResponses / stat.totalResponses >= 0.7 ? 'Easy' :
+           stat.correctResponses / stat.totalResponses >= 0.4 ? 'Medium' : 'Hard')
+        : 'Unknown'
+    })).sort((a, b) => a.accuracy - b.accuracy) // Sort by difficulty (hardest first)
+
+    return {
+      totalQuestions,
+      totalResponses,
+      totalStudents,
+      completionRate,
+      accuracy,
+      avgResponseTime: avgTime,
+      avgQuizTime: avgQuizTime,
+      correctCount: correct,
+      incorrectCount: totalResponses - correct,
+      questionStats,
+      studentQuizTimes: studentQuizTimes.sort((a, b) => a.totalQuizTimeSec - b.totalQuizTimeSec)
+    }
+  }
+
+  // Format quiz time for display
+  const formatQuizTime = (ms) => {
+    const seconds = Math.floor(ms / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`
+    }
+    return `${seconds}s`
+  }
+
+  const quizGroups = groupResponsesByQuiz()
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -232,20 +413,291 @@ const ViewResponses = () => {
           <p className="text-gray-600">View and manage student responses</p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Detailed Quiz-Wise Analytics */}
+        {quizGroups.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">📊 Detailed Quiz Analytics (Research Data)</h2>
+            <div className="space-y-6">
+              {quizGroups.map((quiz) => {
+                const assignment = assignments.find(a => a._id === quiz.id)
+                const analytics = calculateDetailedQuizAnalytics(quiz, assignment)
+                const isExpanded = expandedQuiz === quiz.id
+                
+                return (
+                  <div key={quiz.id} className="bg-white rounded-lg shadow-lg border-l-4 border-blue-500 overflow-hidden">
+                    {/* Quiz Header */}
+                    <div 
+                      className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => setExpandedQuiz(isExpanded ? null : quiz.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 mb-1">
+                            {quiz.quizNumber ? `Quiz #${quiz.quizNumber}: ` : ''}{quiz.title}
+                          </h3>
+                          {assignment?.classId && (
+                            <p className="text-sm text-gray-600">Class: {assignment.classId.name}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                            {analytics.totalQuestions} Questions
+                          </span>
+                          <svg 
+                            className={`w-5 h-5 text-gray-500 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                      
+                      {/* Quick Stats */}
+                      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mt-4">
+                        <div className="text-center">
+                          <p className="text-gray-600 text-xs font-semibold uppercase mb-1">Students</p>
+                          <p className="text-2xl font-bold text-gray-900">{analytics.totalStudents}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-gray-600 text-xs font-semibold uppercase mb-1">Responses</p>
+                          <p className="text-2xl font-bold text-gray-900">{analytics.totalResponses}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-gray-600 text-xs font-semibold uppercase mb-1">Completion</p>
+                          <p className="text-2xl font-bold text-blue-600">{analytics.completionRate}%</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-gray-600 text-xs font-semibold uppercase mb-1">Accuracy</p>
+                          <p className={`text-2xl font-bold ${
+                            analytics.accuracy >= 80 ? 'text-green-600' :
+                            analytics.accuracy >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {analytics.accuracy}%
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-gray-600 text-xs font-semibold uppercase mb-1">Avg Question Time</p>
+                          <p className="text-2xl font-bold text-purple-600">{analytics.avgResponseTime}s</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-gray-600 text-xs font-semibold uppercase mb-1">Avg Quiz Time</p>
+                          <p className="text-2xl font-bold text-indigo-600">{analytics.avgQuizTime}s</p>
+                          <p className="text-xs text-gray-500 mt-1">per student</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Detailed View */}
+                    {isExpanded && (
+                      <div className="border-t bg-gray-50 p-6">
+                        {/* Overall Quiz Summary */}
+                        <div className="mb-6">
+                          <h4 className="text-lg font-bold text-gray-900 mb-3">📈 Quiz Summary</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-white p-4 rounded-lg">
+                              <p className="text-gray-600 text-xs font-semibold mb-1">Total Questions</p>
+                              <p className="text-2xl font-bold text-gray-900">{analytics.totalQuestions}</p>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg">
+                              <p className="text-gray-600 text-xs font-semibold mb-1">Correct Answers</p>
+                              <p className="text-2xl font-bold text-green-600">{analytics.correctCount}</p>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg">
+                              <p className="text-gray-600 text-xs font-semibold mb-1">Incorrect Answers</p>
+                              <p className="text-2xl font-bold text-red-600">{analytics.incorrectCount}</p>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg">
+                              <p className="text-gray-600 text-xs font-semibold mb-1">Completion Rate</p>
+                              <p className="text-2xl font-bold text-blue-600">{analytics.completionRate}%</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Student Quiz Times */}
+                        {analytics.studentQuizTimes.length > 0 && (
+                          <div className="mb-6">
+                            <h4 className="text-lg font-bold text-gray-900 mb-3">⏱️ Student Quiz Completion Times</h4>
+                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-1">Average Quiz Time</p>
+                                  <p className="text-2xl font-bold text-indigo-600">{analytics.avgQuizTime} seconds</p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    ({formatQuizTime(analytics.avgQuizTime * 1000)})
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-1">Fastest Completion</p>
+                                  <p className="text-2xl font-bold text-green-600">
+                                    {analytics.studentQuizTimes[0]?.formattedTime || 'N/A'}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {analytics.studentQuizTimes[0]?.studentName || ''}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="max-h-64 overflow-y-auto">
+                                <table className="w-full text-sm">
+                                  <thead className="bg-gray-50 sticky top-0">
+                                    <tr>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Student</th>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Questions</th>
+                                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Total Time</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-200">
+                                    {analytics.studentQuizTimes.map((student, idx) => (
+                                      <tr key={student.studentId} className="hover:bg-gray-50">
+                                        <td className="px-3 py-2 text-gray-900">{student.studentName}</td>
+                                        <td className="px-3 py-2 text-gray-600">{student.questionCount}/{analytics.totalQuestions}</td>
+                                        <td className="px-3 py-2 font-semibold text-gray-900">{student.formattedTime}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Per-Question Statistics with Individual Response Times */}
+                        {analytics.questionStats.length > 0 && (
+                          <div>
+                            <h4 className="text-lg font-bold text-gray-900 mb-3">📋 Per-Question Analysis (Individual Question Response Times)</h4>
+                            <div className="space-y-4 max-h-96 overflow-y-auto">
+                              {analytics.questionStats.map((qStat, index) => {
+                                // Get all individual response times for this question
+                                const questionResponses = quiz.responses.filter(
+                                  r => r.questionId?._id?.toString() === qStat.questionId
+                                )
+                                const individualTimes = questionResponses.map(r => ({
+                                  studentName: r.studentId?.name || 'Unknown',
+                                  responseTime: (r.responseTime || 0) / 1000, // Convert ms to seconds
+                                  isCorrect: r.isCorrect,
+                                  answeredAt: r.answeredAt
+                                })).sort((a, b) => a.responseTime - b.responseTime) // Sort by time (fastest first)
+                                
+                                return (
+                                  <div key={qStat.questionId} className="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div className="flex items-start justify-between mb-3">
+                                      <div className="flex-1">
+                                        <p className="font-semibold text-gray-900 mb-2">
+                                          Q{index + 1}: {qStat.questionText.length > 100 
+                                            ? qStat.questionText.substring(0, 100) + '...' 
+                                            : qStat.questionText}
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                            qStat.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
+                                            qStat.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                            'bg-red-100 text-red-800'
+                                          }`}>
+                                            {qStat.difficulty}
+                                          </span>
+                                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                                            {qStat.accuracy}% Correct
+                                          </span>
+                                          <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold">
+                                            Avg: {qStat.avgTime}s
+                                          </span>
+                                          <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-semibold">
+                                            Fastest: {individualTimes[0]?.responseTime.toFixed(2) || 0}s
+                                          </span>
+                                          <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-semibold">
+                                            Slowest: {individualTimes[individualTimes.length - 1]?.responseTime.toFixed(2) || 0}s
+                                          </span>
+                                          <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-semibold">
+                                            {qStat.totalResponses} responses
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Individual Student Response Times for This Question */}
+                                    <div className="mt-4 pt-3 border-t border-gray-200">
+                                      <p className="text-xs font-semibold text-gray-700 mb-2">⏱️ Individual Response Times (per student for this question):</p>
+                                      <div className="max-h-48 overflow-y-auto bg-gray-50 rounded p-2">
+                                        <table className="w-full text-xs">
+                                          <thead className="bg-gray-100 sticky top-0">
+                                            <tr>
+                                              <th className="px-2 py-1 text-left text-xs font-semibold text-gray-700">Student</th>
+                                              <th className="px-2 py-1 text-left text-xs font-semibold text-gray-700">Time</th>
+                                              <th className="px-2 py-1 text-left text-xs font-semibold text-gray-700">Status</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-gray-200">
+                                            {individualTimes.map((time, idx) => (
+                                              <tr key={idx} className="hover:bg-white">
+                                                <td className="px-2 py-1 text-gray-900">{time.studentName}</td>
+                                                <td className="px-2 py-1 font-semibold text-gray-900">{time.responseTime.toFixed(2)}s</td>
+                                                <td className="px-2 py-1">
+                                                  <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                                    time.isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                  }`}>
+                                                    {time.isCorrect ? '✓' : '✗'}
+                                                  </span>
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Answer Distribution */}
+                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                      <p className="text-xs font-semibold text-gray-700 mb-2">Answer Distribution:</p>
+                                      <div className="grid grid-cols-4 gap-2">
+                                        {[0, 1, 2, 3].map(opt => {
+                                          const count = qStat.answerDistribution[opt] || 0
+                                          const percentage = qStat.totalResponses > 0 
+                                            ? Math.round((count / qStat.totalResponses) * 100) 
+                                            : 0
+                                          return (
+                                            <div key={opt} className="text-center bg-gray-50 p-2 rounded">
+                                              <p className="text-xs text-gray-600 font-semibold">Option {String.fromCharCode(65 + opt)}</p>
+                                              <p className="text-sm font-bold text-gray-900">{count}</p>
+                                              <p className="text-xs text-gray-500">{percentage}%</p>
+                                            </div>
+                                          )
+                                        })}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Overall Stats Cards */}
         {responses.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600 text-sm font-semibold uppercase">Total Responses</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{responses.length}</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600 text-sm font-semibold uppercase">Accuracy</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">{calculateAccuracy()}%</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600 text-sm font-semibold uppercase">Avg Response Time</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">{calculateAverageResponseTime()}s</p>
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Overall Statistics</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-gray-600 text-sm font-semibold uppercase">Total Responses</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{responses.length}</p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-gray-600 text-sm font-semibold uppercase">Overall Accuracy</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">{calculateAccuracy()}%</p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <p className="text-gray-600 text-sm font-semibold uppercase">Avg Response Time</p>
+                <p className="text-3xl font-bold text-blue-600 mt-2">{calculateAverageResponseTime()}s</p>
+              </div>
             </div>
           </div>
         )}
