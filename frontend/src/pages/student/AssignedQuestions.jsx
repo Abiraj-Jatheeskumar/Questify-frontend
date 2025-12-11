@@ -14,18 +14,37 @@ const AssignedQuestions = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [quizStartTime, setQuizStartTime] = useState(null);
   const [completedAssignments, setCompletedAssignments] = useState(new Set());
+  const [hasAnyResponses, setHasAnyResponses] = useState(false);
   
   const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     fetchAssignedQuestions();
+    checkStudentResponses();
   }, []);
+
+  const checkStudentResponses = async () => {
+    try {
+      const response = await api.get('/students/my-responses');
+      setHasAnyResponses(response.data && response.data.length > 0);
+    } catch (err) {
+      setHasAnyResponses(false);
+    }
+  };
 
   const fetchAssignedQuestions = async () => {
     try {
       setLoading(true);
       const response = await api.get('/students/assigned-questions');
       const questions = response.data;
+      
+      // Check if student is in any class (if questions array is empty, might be no class assigned)
+      if (questions.length === 0 && user && (!user.classIds || user.classIds.length === 0)) {
+        setError('');
+        setAssignments([]);
+        setLoading(false);
+        return;
+      }
       
       // Group questions by assignment and filter non-answered ones
       const groupedByAssignment = {};
@@ -83,6 +102,11 @@ const AssignedQuestions = () => {
     const times = {};
     times[assignment.questions[0].questionId] = Date.now();
     setStartTimes(times);
+    
+    // Scroll to top when starting quiz
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleSelectAnswer = (questionId, answerIndex) => {
@@ -169,6 +193,13 @@ const AssignedQuestions = () => {
       setElapsedTime(0);
     }
   };
+
+  // Scroll to top when question changes
+  useEffect(() => {
+    if (activeQuiz && currentQuestionIndex >= 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentQuestionIndex, activeQuiz]);
 
   // Timer effect for quiz
   useEffect(() => {
@@ -406,12 +437,34 @@ const AssignedQuestions = () => {
         {assignments.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center border-2 border-dashed border-gray-300">
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center">
-              <svg className="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              {hasAnyResponses ? (
+                <svg className="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
             </div>
-            <p className="text-gray-800 text-xl font-bold mb-2">🎉 All Caught Up!</p>
-            <p className="text-gray-600">You've completed all available quizzes. Great job!</p>
+            {hasAnyResponses ? (
+              <>
+                <p className="text-gray-800 text-xl font-bold mb-2">🎉 All Caught Up!</p>
+                <p className="text-gray-600">You've completed all available quizzes. Great job!</p>
+              </>
+            ) : user && (!user.classIds || user.classIds.length === 0) ? (
+              <>
+                <p className="text-gray-800 text-xl font-bold mb-2">👋 Welcome to Questify!</p>
+                <p className="text-gray-600 mb-4">Your account is being set up.</p>
+                <p className="text-gray-500 text-sm">Please wait for your instructor to add you to a class and assign quizzes.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-800 text-xl font-bold mb-2">👋 Welcome to Questify!</p>
+                <p className="text-gray-600 mb-4">No assignments available at the moment.</p>
+                <p className="text-gray-500 text-sm">Your instructor will assign quizzes soon. Please check back later!</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
