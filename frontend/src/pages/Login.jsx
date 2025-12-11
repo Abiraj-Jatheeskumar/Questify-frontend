@@ -88,7 +88,11 @@ const Login = () => {
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form 
+            className="space-y-5" 
+            onSubmit={handleSubmit}
+            autoComplete={error || localError ? "off" : "on"}
+          >
 
             {/* Role Selector */}
             <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
@@ -129,7 +133,7 @@ const Login = () => {
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
+                autoComplete={error || localError ? "off" : "email"}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -150,7 +154,7 @@ const Login = () => {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete={error || localError ? "new-password" : "current-password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

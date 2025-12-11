@@ -282,16 +282,22 @@ const AssignedQuestions = () => {
 
             {/* Options */}
             <div className="space-y-3 sm:space-y-4">
-              {question.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSelectAnswer(question.questionId, index)}
-                  className={`w-full text-left p-4 sm:p-5 rounded-xl border-2 transition-all duration-300 transform hover:scale-102 ${
-                    selectedAnswer === index
-                      ? 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-600 shadow-xl ring-4 ring-purple-100'
-                      : 'bg-white border-gray-300 hover:border-purple-400 hover:bg-gray-50 hover:shadow-lg'
-                  }`}
-                >
+              {question.options && question.options.length > 0 ? (
+                question.options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSelectAnswer(question.questionId, index)}
+                    disabled={submitting}
+                    className={`w-full text-left p-4 sm:p-5 rounded-xl border-2 transition-all duration-300 transform hover:scale-102 ${
+                      submitting 
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : 'cursor-pointer'
+                    } ${
+                      selectedAnswer === index
+                        ? 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-600 shadow-xl ring-4 ring-purple-100'
+                        : 'bg-white border-gray-300 hover:border-purple-400 hover:bg-gray-50 hover:shadow-lg'
+                    }`}
+                  >
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
                       <div
@@ -314,7 +320,12 @@ const AssignedQuestions = () => {
                     )}
                   </div>
                 </button>
-              ))}
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No options available for this question.</p>
+                </div>
+              )}
             </div>
 
             {error && (
