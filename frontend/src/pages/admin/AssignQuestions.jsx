@@ -25,27 +25,24 @@ const AssignQuestions = () => {
     dispatch(getAllAssignments())
   }, [dispatch])
 
-  // Filter questions: hide those already assigned to selected class
-  const assignedQuestionIds = useMemo(() => {
+  // Track which questions have been used in previous quizzes for this class (for tagging only)
+  const usedQuestionIds = useMemo(() => {
+    if (!formData.classId) return new Set()
     const classAssignments = assignments.filter(a => a.classId?._id === formData.classId)
-    const assignedIds = new Set()
+    const usedIds = new Set()
     classAssignments.forEach(assignment => {
-      assignment.questionIds?.forEach(qId => assignedIds.add(qId))
+      assignment.questionIds?.forEach(qId => usedIds.add(qId))
     })
-    return assignedIds
+    return usedIds
   }, [formData.classId, assignments])
 
-  // Get available questions (not assigned to selected class)
-  const availableQuestions = useMemo(() => {
-    return questions.filter(q => !assignedQuestionIds.has(q._id))
-  }, [questions, assignedQuestionIds])
-
-  // Filter by search query
+  // Filter by search query (show all questions, no filtering by usage)
   const filteredQuestions = useMemo(() => {
-    return availableQuestions.filter(q =>
+    if (!searchQuery.trim()) return questions
+    return questions.filter(q =>
       q.question.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  }, [availableQuestions, searchQuery])
+  }, [questions, searchQuery])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -101,7 +98,7 @@ const AssignQuestions = () => {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">📝 Create Quiz Assignment</h1>
           <p className="text-gray-600 text-lg">
-            Assign new questions to your class. Only unassigned questions are shown.
+            Assign questions to your class. All questions are available. Previously used questions are tagged.
           </p>
         </div>
 
@@ -182,9 +179,14 @@ const AssignQuestions = () => {
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <div className="flex justify-between items-center mb-4">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-1">📚 Available Questions</h3>
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">📚 Question Bank</h3>
                       <p className="text-sm text-gray-600">
-                        {filteredQuestions.length} of {availableQuestions.length} questions available
+                        {filteredQuestions.length} {searchQuery ? 'matching' : 'total'} question{filteredQuestions.length !== 1 ? 's' : ''}
+                        {formData.classId && usedQuestionIds.size > 0 && (
+                          <span className="ml-2 text-amber-600">
+                            ({usedQuestionIds.size} previously used)
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="text-right">
@@ -229,36 +231,50 @@ const AssignQuestions = () => {
                     ) : filteredQuestions.length === 0 ? (
                       <div className="text-center py-8 bg-gray-50 rounded-lg">
                         <p className="text-gray-500">
-                          {searchQuery ? '❌ No questions match your search' : '✓ All questions already assigned!'}
+                          {searchQuery ? '❌ No questions match your search' : 'No questions available'}
                         </p>
                       </div>
                     ) : (
-                      filteredQuestions.map((question, index) => (
-                        <label
-                          key={question._id}
-                          className="flex items-start space-x-3 cursor-pointer p-3 hover:bg-blue-50 rounded-lg transition duration-200 border border-gray-200"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.questionIds.includes(question._id)}
-                            onChange={() => toggleQuestion(question._id)}
-                            className="w-5 h-5 text-blue-600 cursor-pointer mt-1 flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 break-words">
-                              <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold mr-2">
-                                Q{index + 1}
-                              </span>
-                              {question.question}
-                            </p>
-                            {question.options && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                Options: {question.options.length}
+                      filteredQuestions.map((question, index) => {
+                        const isUsed = formData.classId && usedQuestionIds.has(question._id)
+                        return (
+                          <label
+                            key={question._id}
+                            className={`flex items-start space-x-3 cursor-pointer p-3 rounded-lg transition duration-200 border ${
+                              isUsed 
+                                ? 'border-amber-300 bg-amber-50 hover:bg-amber-100' 
+                                : 'border-gray-200 hover:bg-blue-50'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.questionIds.includes(question._id)}
+                              onChange={() => toggleQuestion(question._id)}
+                              className="w-5 h-5 text-blue-600 cursor-pointer mt-1 flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">
+                                  Q{index + 1}
+                                </span>
+                                {isUsed && (
+                                  <span className="inline-block bg-amber-200 text-amber-800 px-2 py-1 rounded text-xs font-semibold border border-amber-300">
+                                    🔄 Previously Used
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm font-medium text-gray-900 break-words mt-1">
+                                {question.question}
                               </p>
-                            )}
-                          </div>
-                        </label>
-                      ))
+                              {question.options && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Options: {question.options.length}
+                                </p>
+                              )}
+                            </div>
+                          </label>
+                        )
+                      })
                     )}
                   </div>
                 </div>
