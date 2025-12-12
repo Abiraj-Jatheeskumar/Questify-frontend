@@ -7,6 +7,7 @@ import {
   deleteStudent,
   getAllClasses
 } from '../../redux/slices/adminSlice'
+import api from '../../services/api'
 
 const ManageStudents = () => {
   const dispatch = useDispatch()
@@ -62,6 +63,27 @@ const ManageStudents = () => {
     setFormData({ name: '', email: '', admissionNo: '', classIds: [] })
   }
 
+  const handleExportCSV = async () => {
+    try {
+      const response = await api.get('/admin/export-students-csv', {
+        responseType: 'blob'
+      })
+      
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `students_${Date.now()}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert('Failed to export students. Please try again.')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -72,15 +94,26 @@ const ManageStudents = () => {
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">View and manage all student accounts</p>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-bold text-sm sm:text-base w-full sm:w-auto shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
-            </svg>
-            Add Student
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl hover:from-green-700 hover:to-teal-700 transition-all duration-300 font-bold text-sm sm:text-base w-full sm:w-auto shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Export CSV
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-bold text-sm sm:text-base w-full sm:w-auto shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+              </svg>
+              Add Student
+            </button>
+          </div>
         </div>
 
       {error && (
