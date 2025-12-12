@@ -335,11 +335,11 @@ const ManageStudents = () => {
       ) : (
         <>
           {/* Desktop Table View */}
-          <div className="hidden md:block bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="hidden md:block bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200 overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 table-fixed">
               <thead className="bg-gradient-to-r from-purple-600 to-blue-600">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="w-1/5 px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
@@ -347,7 +347,7 @@ const ManageStudents = () => {
                       Name
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="w-1/6 px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clipRule="evenodd"/>
@@ -355,7 +355,7 @@ const ManageStudents = () => {
                       Admission No
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="w-1/4 px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
@@ -364,7 +364,7 @@ const ManageStudents = () => {
                       Email
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="w-1/6 px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
@@ -372,7 +372,7 @@ const ManageStudents = () => {
                       Classes
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <th className="w-1/5 px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -394,38 +394,40 @@ const ManageStudents = () => {
                   </tr>
                 ) : filteredStudents.map((student, index) => (
                   <tr key={student._id} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
                           {student.name?.charAt(0).toUpperCase()}
                         </div>
-                        <span className="text-sm font-semibold text-gray-900">{student.name}</span>
+                        <span className="text-sm font-semibold text-gray-900 truncate">{student.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       {student.admissionNo ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 whitespace-nowrap">
                           {student.admissionNo}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">
                           Not Set
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {student.email}
+                    <td className="px-4 py-4 text-sm text-gray-700">
+                      <div className="truncate max-w-xs" title={student.email}>
+                        {student.email}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       {student.classIds?.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {student.classIds.slice(0, 2).map((c, idx) => (
-                            <span key={idx} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
+                            <span key={idx} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 whitespace-nowrap">
                               {c.name || 'N/A'}
                             </span>
                           ))}
                           {student.classIds.length > 2 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">
                               +{student.classIds.length - 2}
                             </span>
                           )}
@@ -434,11 +436,12 @@ const ManageStudents = () => {
                         <span className="text-sm text-gray-400 italic">None</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleEdit(student)}
-                          className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold transition-all duration-200 flex items-center gap-1"
+                          className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap text-sm shadow-sm hover:shadow-md"
+                          title="Edit student"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -447,7 +450,8 @@ const ManageStudents = () => {
                         </button>
                         <button
                           onClick={() => handleDelete(student._id)}
-                          className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-all duration-200 flex items-center gap-1"
+                          className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap text-sm shadow-sm hover:shadow-md"
+                          title="Delete student"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
