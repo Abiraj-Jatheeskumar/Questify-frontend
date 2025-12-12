@@ -11,6 +11,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    admissionNo: '',
   });
   const [validationError, setValidationError] = useState('');
   
@@ -54,6 +55,11 @@ const Register = () => {
       return;
     }
 
+    if (!formData.admissionNo.trim()) {
+      setValidationError('Student card number is required');
+      return;
+    }
+
     if (formData.password.length < 6) {
       setValidationError('Password must be at least 6 characters long');
       return;
@@ -69,7 +75,8 @@ const Register = () => {
       name: formData.name,
       email: formData.email,
       password: formData.password,
-      role: 'student' // Fixed role as student
+      role: 'student', // Fixed role as student
+      admissionNo: formData.admissionNo.trim()
     }));
 
     // If registration is successful, navigate to login
@@ -80,6 +87,7 @@ const Register = () => {
         email: '',
         password: '',
         confirmPassword: '',
+        admissionNo: '',
       });
       // Navigate to login with success message
       navigate('/login', { state: { message: 'Registration successful! Please log in with your credentials.' } });
@@ -139,6 +147,24 @@ const Register = () => {
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
                 placeholder="your.email@example.com"
+              />
+            </div>
+
+            {/* Student Card Number Input */}
+            <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
+              <label htmlFor="admissionNo" className="block text-sm font-medium text-gray-700 mb-2">
+                Student Card Number
+              </label>
+              <input
+                id="admissionNo"
+                name="admissionNo"
+                type="text"
+                autoComplete="off"
+                required
+                value={formData.admissionNo}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
+                placeholder="Enter your student card number"
               />
             </div>
 
