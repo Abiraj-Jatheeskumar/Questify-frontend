@@ -143,6 +143,46 @@ const ManageStudents = () => {
     }
   }
 
+  const handleExportCSVMasked = async () => {
+    try {
+      const response = await api.get('/admin/export-students-csv-masked', {
+        responseType: 'blob'
+      })
+      
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `students_masked_${Date.now()}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert('Failed to export students. Please try again.')
+    }
+  }
+
+  const handleExportPDFMasked = async () => {
+    try {
+      const response = await api.get('/admin/export-students-pdf-masked')
+      
+      // Open in new window to allow browser's print-to-PDF
+      const printWindow = window.open('', '_blank')
+      printWindow.document.write(response.data)
+      printWindow.document.close()
+      
+      // Wait a bit for content to load, then trigger print dialog
+      setTimeout(() => {
+        printWindow.print()
+      }, 500)
+    } catch (error) {
+      console.error('Export PDF failed:', error)
+      alert('Failed to export PDF. Please try again.')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -153,56 +193,80 @@ const ManageStudents = () => {
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">View and manage all student accounts</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
-            <div className="flex gap-2">
-              <button
-                onClick={handleExportCSV}
-                className="px-3 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
-                title="Export with Email"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                CSV
-              </button>
-              <button
-                onClick={handleExportPDF}
-                className="px-3 py-2 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg hover:from-red-700 hover:to-pink-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
-                title="Export with Email"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
-                PDF
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleExportCSVNoEmail}
-                className="px-3 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
-                title="Export without Email"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                CSV (No Email)
-              </button>
-              <button
-                onClick={handleExportPDFNoEmail}
-                className="px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
-                title="Export without Email"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
-                PDF (No Email)
-              </button>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExportCSV}
+                  className="px-3 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
+                  title="Export with Full Email"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  CSV
+                </button>
+                <button
+                  onClick={handleExportPDF}
+                  className="px-3 py-2 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg hover:from-red-700 hover:to-pink-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
+                  title="Export with Full Email"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                  PDF
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExportCSVMasked}
+                  className="px-3 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 text-white rounded-lg hover:from-yellow-700 hover:to-amber-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
+                  title="Export with Masked Email (sa**14@gmail.com)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  CSV (Masked)
+                </button>
+                <button
+                  onClick={handleExportPDFMasked}
+                  className="px-3 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg hover:from-violet-700 hover:to-purple-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
+                  title="Export with Masked Email (sa**14@gmail.com)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  PDF (Masked)
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExportCSVNoEmail}
+                  className="px-3 py-2 bg-gradient-to-r from-gray-600 to-slate-600 text-white rounded-lg hover:from-gray-700 hover:to-slate-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
+                  title="Export without Email"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                  </svg>
+                  CSV (No Email)
+                </button>
+                <button
+                  onClick={handleExportPDFNoEmail}
+                  className="px-3 py-2 bg-gradient-to-r from-stone-600 to-zinc-600 text-white rounded-lg hover:from-stone-700 hover:to-zinc-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
+                  title="Export without Email"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                  </svg>
+                  PDF (No Email)
+                </button>
+              </div>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1"
+              className="px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 font-bold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
               </svg>
               Add Student
