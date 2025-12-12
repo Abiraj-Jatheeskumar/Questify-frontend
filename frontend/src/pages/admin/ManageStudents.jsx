@@ -14,6 +14,7 @@ const ManageStudents = () => {
   const { students, classes, loading, error } = useSelector((state) => state.admin)
   const [showModal, setShowModal] = useState(false)
   const [editingStudent, setEditingStudent] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -183,6 +184,18 @@ const ManageStudents = () => {
     }
   }
 
+  // Filter students based on search term
+  const filteredStudents = students.filter(student => {
+    if (!searchTerm.trim()) return true
+    
+    const search = searchTerm.toLowerCase()
+    const name = (student.name || '').toLowerCase()
+    const email = (student.email || '').toLowerCase()
+    const admissionNo = (student.admissionNo || '').toLowerCase()
+    
+    return name.includes(search) || email.includes(search) || admissionNo.includes(search)
+  })
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -274,6 +287,35 @@ const ManageStudents = () => {
           </div>
         </div>
 
+      {/* Search Filter */}
+      <div className="mb-6 bg-white rounded-xl shadow-lg p-4 border border-gray-200">
+        <div className="flex items-center gap-3">
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search by name, email, or admission number..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold text-sm transition-all duration-200"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <p className="text-sm text-gray-600 mt-2">
+            Found {filteredStudents.length} of {students.length} students
+          </p>
+        )}
+      </div>
+
       {error && (
         <div className="mb-6 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 p-4 shadow-lg border-2 border-red-300">
           <div className="flex items-start gap-3">
@@ -336,7 +378,21 @@ const ManageStudents = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {students.map((student, index) => (
+                {filteredStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <p className="text-gray-500 font-semibold text-lg">No students found</p>
+                        <p className="text-gray-400 text-sm mt-1">
+                          {searchTerm ? 'Try adjusting your search terms' : 'Add students to get started'}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredStudents.map((student, index) => (
                   <tr key={student._id} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
@@ -408,7 +464,17 @@ const ManageStudents = () => {
 
           {/* Mobile Card View */}
           <div className="md:hidden space-y-4">
-            {students.map((student) => (
+            {filteredStudents.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-300">
+                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <p className="text-gray-500 font-semibold text-lg">No students found</p>
+                <p className="text-gray-400 text-sm mt-1">
+                  {searchTerm ? 'Try adjusting your search terms' : 'Add students to get started'}
+                </p>
+              </div>
+            ) : filteredStudents.map((student) => (
               <div key={student._id} className="bg-white rounded-xl shadow-lg p-4 border-2 border-gray-200 hover:border-purple-300 transition-all duration-300">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
