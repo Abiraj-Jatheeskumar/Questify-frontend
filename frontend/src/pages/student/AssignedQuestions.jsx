@@ -138,7 +138,9 @@ const AssignedQuestions = () => {
         selectedAnswer,
         classId: question.classId,
         startTime: startTime,
-        assignmentId: activeQuiz.assignmentId
+        assignmentId: activeQuiz.assignmentId,
+        currentQuestionIndex: currentQuestionIndex,
+        totalQuestions: activeQuiz.questions.length
       });
 
       // Move to next question

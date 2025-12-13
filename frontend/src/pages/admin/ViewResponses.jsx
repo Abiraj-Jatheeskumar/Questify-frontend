@@ -16,6 +16,9 @@ const ViewResponses = () => {
   const [expandedQuiz, setExpandedQuiz] = useState(null)
   const [nonParticipants, setNonParticipants] = useState({})
   const [loadingNonParticipants, setLoadingNonParticipants] = useState({})
+  const [liveProgress, setLiveProgress] = useState({})
+  const [loadingLiveProgress, setLoadingLiveProgress] = useState({})
+  const [autoRefresh, setAutoRefresh] = useState({})
 
   useEffect(() => {
     dispatch(getAllClasses())
@@ -86,6 +89,61 @@ const ViewResponses = () => {
       console.error('Export PDF failed:', error)
       alert('Failed to export PDF. Please try again.')
     }
+  }
+
+  const fetchLiveProgress = async (assignmentId) => {
+    try {
+      setLoadingLiveProgress(prev => ({ ...prev, [assignmentId]: true }))
+      const response = await api.get(`/admin/assignments/${assignmentId}/live-progress`)
+      setLiveProgress(prev => ({ ...prev, [assignmentId]: response.data }))
+    } catch (error) {
+      console.error('Failed to fetch live progress:', error)
+      alert('Failed to load live progress')
+    } finally {
+      setLoadingLiveProgress(prev => ({ ...prev, [assignmentId]: false }))
+    }
+  }
+
+  const toggleAutoRefresh = (assignmentId) => {
+    setAutoRefresh(prev => {
+      const newState = { ...prev, [assignmentId]: !prev[assignmentId] }
+      
+      // If enabling, start fetching immediately
+      if (newState[assignmentId]) {
+        fetchLiveProgress(assignmentId)
+      }
+      
+      return newState
+    })
+  }
+
+  // Auto-refresh effect for live progress
+  useEffect(() => {
+    const intervals = {}
+    
+    Object.keys(autoRefresh).forEach(assignmentId => {
+      if (autoRefresh[assignmentId]) {
+        // Refresh every 30 seconds
+        intervals[assignmentId] = setInterval(() => {
+          fetchLiveProgress(assignmentId)
+        }, 30000)
+      }
+    })
+    
+    // Cleanup
+    return () => {
+      Object.values(intervals).forEach(interval => clearInterval(interval))
+    }
+  }, [autoRefresh])
+
+  const formatTimeAgo = (date) => {
+    if (!date) return 'N/A'
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000)
+    if (seconds < 60) return `${seconds}s ago`
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    return `${hours}h ago`
   }
 
   const handleExportJSON = async () => {
@@ -545,6 +603,159 @@ const ViewResponses = () => {
                     {/* Expanded Detailed View */}
                     {isExpanded && (
                       <div className="border-t bg-gray-50 p-6">
+                        {/* Live Progress Section */}
+                        <div className="mb-6">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-lg font-bold text-gray-900">📊 Live Quiz Progress</h4>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => toggleAutoRefresh(quiz.id)}
+                                className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2 ${
+                                  autoRefresh[quiz.id]
+                                    ? 'bg-green-600 text-white hover:bg-green-700'
+                                    : 'bg-gray-600 text-white hover:bg-gray-700'
+                                }`}
+                              >
+                                {autoRefresh[quiz.id] ? (
+                                  <>
+                                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Auto-Refresh ON
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    Auto-Refresh OFF
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => fetchLiveProgress(quiz.id)}
+                                disabled={loadingLiveProgress[quiz.id]}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                              >
+                                {loadingLiveProgress[quiz.id] ? (
+                                  <>
+                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Loading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    Refresh Now
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {liveProgress[quiz.id] && (
+                            <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                              {/* Summary Cards */}
+                              <div className="grid grid-cols-3 gap-4 mb-4">
+                                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                  <p className="text-sm text-gray-600 font-semibold">Not Started</p>
+                                  <p className="text-2xl font-bold text-gray-600">{liveProgress[quiz.id].summary.notStarted}</p>
+                                </div>
+                                <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                                  <p className="text-sm text-gray-600 font-semibold">In Progress</p>
+                                  <p className="text-2xl font-bold text-yellow-600">{liveProgress[quiz.id].summary.inProgress}</p>
+                                </div>
+                                <div className="text-center p-3 bg-green-50 rounded-lg">
+                                  <p className="text-sm text-gray-600 font-semibold">Completed</p>
+                                  <p className="text-2xl font-bold text-green-600">{liveProgress[quiz.id].summary.completed}</p>
+                                </div>
+                              </div>
+                              
+                              <p className="text-xs text-gray-500 mb-4">Last updated: {formatTimeAgo(liveProgress[quiz.id].lastUpdated)}</p>
+                              
+                              {/* In Progress Students */}
+                              {liveProgress[quiz.id].inProgress.length > 0 && (
+                                <div className="mb-4">
+                                  <h5 className="text-sm font-bold text-gray-900 mb-3">🔄 Students Currently Taking Quiz:</h5>
+                                  <div className="max-h-64 overflow-y-auto bg-gray-50 rounded-lg p-3 space-y-2">
+                                    {liveProgress[quiz.id].inProgress.map((student) => (
+                                      <div key={student._id} className={`bg-white p-3 rounded-lg border-2 transition-colors ${
+                                        student.status === 'active' ? 'border-green-400' :
+                                        student.status === 'slow' ? 'border-yellow-400' : 'border-red-400'
+                                      }`}>
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 flex-1">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
+                                              student.status === 'active' ? 'bg-gradient-to-br from-green-500 to-emerald-500' :
+                                              student.status === 'slow' ? 'bg-gradient-to-br from-yellow-500 to-orange-500' :
+                                              'bg-gradient-to-br from-red-500 to-pink-500'
+                                            }`}>
+                                              {student.name?.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-semibold text-gray-900 text-sm">{student.name}</p>
+                                              <p className="text-xs text-gray-500">
+                                                {student.admissionNo && `ID: ${student.admissionNo} • `}
+                                                Last active: {formatTimeAgo(student.lastActivityAt)}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                              <p className="text-sm font-bold text-gray-900">
+                                                Q{student.currentQuestionIndex + 1}/{student.totalQuestions}
+                                              </p>
+                                              <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                                                <div
+                                                  className={`h-2 rounded-full transition-all ${
+                                                    student.status === 'active' ? 'bg-green-600' :
+                                                    student.status === 'slow' ? 'bg-yellow-600' : 'bg-red-600'
+                                                  }`}
+                                                  style={{ width: `${student.progress}%` }}
+                                                ></div>
+                                              </div>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                              student.status === 'active' ? 'bg-green-100 text-green-800' :
+                                              student.status === 'slow' ? 'bg-yellow-100 text-yellow-800' :
+                                              'bg-red-100 text-red-800'
+                                            }`}>
+                                              {student.status === 'active' ? '🟢 Active' :
+                                               student.status === 'slow' ? '🟡 Slow' : '🔴 Idle'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Completed Students */}
+                              {liveProgress[quiz.id].completed.length > 0 && (
+                                <div>
+                                  <h5 className="text-sm font-bold text-gray-900 mb-3">✅ Completed ({liveProgress[quiz.id].completed.length}):</h5>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    {liveProgress[quiz.id].completed.map((student) => (
+                                      <div key={student._id} className="bg-green-50 p-2 rounded border border-green-200 text-center">
+                                        <p className="text-sm font-semibold text-gray-900 truncate">{student.name}</p>
+                                        <p className="text-xs text-green-600 font-semibold mt-1">
+                                          ⏱️ {Math.floor(student.timeTaken / 60)}:{(student.timeTaken % 60).toString().padStart(2, '0')}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         {/* Non-Participating Students Section */}
                         <div className="mb-6">
                           <div className="flex items-center justify-between mb-3">
