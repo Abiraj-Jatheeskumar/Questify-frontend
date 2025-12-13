@@ -50,6 +50,44 @@ const ViewResponses = () => {
     }
   }
 
+  const handleExportNonParticipantsCSV = async (assignmentId) => {
+    try {
+      const response = await api.get(`/admin/assignments/${assignmentId}/non-participants/csv`, {
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `non_participants_${Date.now()}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert('Failed to export CSV. Please try again.')
+    }
+  }
+
+  const handleExportNonParticipantsPDF = async (assignmentId) => {
+    try {
+      const response = await api.get(`/admin/assignments/${assignmentId}/non-participants/pdf`)
+      
+      // Open in new window to allow browser's print-to-PDF
+      const printWindow = window.open('', '_blank')
+      printWindow.document.write(response.data)
+      printWindow.document.close()
+      
+      // Wait a bit for content to load, then trigger print dialog
+      setTimeout(() => {
+        printWindow.print()
+      }, 500)
+    } catch (error) {
+      console.error('Export PDF failed:', error)
+      alert('Failed to export PDF. Please try again.')
+    }
+  }
+
   const handleExportJSON = async () => {
     try {
       setExporting(true)
@@ -551,6 +589,29 @@ const ViewResponses = () => {
                                   <p className="text-2xl font-bold text-orange-600">{nonParticipants[quiz.id].notParticipated}</p>
                                 </div>
                               </div>
+                              
+                              {nonParticipants[quiz.id].notParticipated > 0 && (
+                                <div className="flex gap-2 mb-4 justify-end">
+                                  <button
+                                    onClick={() => handleExportNonParticipantsCSV(quiz.id)}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    Export CSV
+                                  </button>
+                                  <button
+                                    onClick={() => handleExportNonParticipantsPDF(quiz.id)}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                    </svg>
+                                    Export PDF
+                                  </button>
+                                </div>
+                              )}
                               
                               {nonParticipants[quiz.id].notParticipated > 0 ? (
                                 <div>
