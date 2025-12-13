@@ -149,7 +149,7 @@ const Leaderboard = () => {
                           </div>
                           <div>
                             <h3 className="text-xl sm:text-2xl font-bold text-gray-900">{entry.studentName}</h3>
-                            <p className="text-sm text-gray-600">{entry.studentEmail}</p>
+                            {/* Email hidden for privacy */}
                           </div>
                         </div>
                       </div>
@@ -211,7 +211,7 @@ const Leaderboard = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="text-base sm:text-lg font-bold text-gray-900 truncate">{entry.studentName}</h4>
-                          <p className="text-xs text-gray-500 truncate">{entry.studentEmail}</p>
+                          {/* Email hidden for privacy */}
                         </div>
                       </div>
                       
