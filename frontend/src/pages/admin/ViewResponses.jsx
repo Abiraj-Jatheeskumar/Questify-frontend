@@ -14,6 +14,8 @@ const ViewResponses = () => {
   const [assignments, setAssignments] = useState([])
   const [exporting, setExporting] = useState(false)
   const [expandedQuiz, setExpandedQuiz] = useState(null)
+  const [nonParticipants, setNonParticipants] = useState({})
+  const [loadingNonParticipants, setLoadingNonParticipants] = useState({})
 
   useEffect(() => {
     dispatch(getAllClasses())
@@ -32,6 +34,19 @@ const ViewResponses = () => {
       setAssignments(response.data)
     } catch (error) {
       console.error('Failed to fetch assignments:', error)
+    }
+  }
+
+  const fetchNonParticipants = async (assignmentId) => {
+    try {
+      setLoadingNonParticipants(prev => ({ ...prev, [assignmentId]: true }))
+      const response = await api.get(`/admin/assignments/${assignmentId}/non-participants`)
+      setNonParticipants(prev => ({ ...prev, [assignmentId]: response.data }))
+    } catch (error) {
+      console.error('Failed to fetch non-participants:', error)
+      alert('Failed to load non-participating students')
+    } finally {
+      setLoadingNonParticipants(prev => ({ ...prev, [assignmentId]: false }))
     }
   }
 
@@ -492,6 +507,89 @@ const ViewResponses = () => {
                     {/* Expanded Detailed View */}
                     {isExpanded && (
                       <div className="border-t bg-gray-50 p-6">
+                        {/* Non-Participating Students Section */}
+                        <div className="mb-6">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-lg font-bold text-gray-900">👥 Student Participation</h4>
+                            <button
+                              onClick={() => fetchNonParticipants(quiz.id)}
+                              disabled={loadingNonParticipants[quiz.id]}
+                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400 transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                            >
+                              {loadingNonParticipants[quiz.id] ? (
+                                <>
+                                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Loading...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                  </svg>
+                                  Show Non-Participants
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          
+                          {nonParticipants[quiz.id] && (
+                            <div className="bg-white p-4 rounded-lg border-2 border-orange-200">
+                              <div className="grid grid-cols-3 gap-4 mb-4">
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                  <p className="text-sm text-gray-600 font-semibold">Total Students</p>
+                                  <p className="text-2xl font-bold text-blue-600">{nonParticipants[quiz.id].totalStudents}</p>
+                                </div>
+                                <div className="text-center p-3 bg-green-50 rounded-lg">
+                                  <p className="text-sm text-gray-600 font-semibold">Participated</p>
+                                  <p className="text-2xl font-bold text-green-600">{nonParticipants[quiz.id].participated}</p>
+                                </div>
+                                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                                  <p className="text-sm text-gray-600 font-semibold">Not Participated</p>
+                                  <p className="text-2xl font-bold text-orange-600">{nonParticipants[quiz.id].notParticipated}</p>
+                                </div>
+                              </div>
+                              
+                              {nonParticipants[quiz.id].notParticipated > 0 ? (
+                                <div>
+                                  <h5 className="text-sm font-bold text-gray-900 mb-3">🚫 Students Who Haven't Attempted This Quiz:</h5>
+                                  <div className="max-h-64 overflow-y-auto bg-gray-50 rounded-lg p-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                      {nonParticipants[quiz.id].nonParticipants.map((student) => (
+                                        <div key={student._id} className="bg-white p-3 rounded-lg border border-gray-200 hover:border-orange-400 transition-colors">
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                              {student.name?.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-semibold text-gray-900 text-sm truncate">{student.name}</p>
+                                              <p className="text-xs text-gray-500 truncate">{student.email}</p>
+                                              {student.admissionNo && (
+                                                <p className="text-xs text-gray-600 font-medium mt-1">
+                                                  ID: {student.admissionNo}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-center py-6">
+                                  <svg className="w-16 h-16 mx-auto text-green-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                  </svg>
+                                  <p className="text-green-600 font-bold">✅ All students have attempted this quiz!</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         {/* Overall Quiz Summary */}
                         <div className="mb-6">
                           <h4 className="text-lg font-bold text-gray-900 mb-3">📈 Quiz Summary</h4>
