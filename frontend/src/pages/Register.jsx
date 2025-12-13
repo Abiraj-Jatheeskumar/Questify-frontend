@@ -98,7 +98,54 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 sm:p-8 font-sans">
       <div className="flex w-full max-w-6xl overflow-hidden rounded-2xl shadow-2xl bg-white">
 
-        {/* Left Side: Register Form */}
+        {/* Left Side: Registration Disabled Message */}
+        <div className="w-full lg:w-1/2 p-6 sm:p-10 md:p-16 flex flex-col justify-center animate-fadeInLeft">
+          <div className="text-center">
+            <div className="text-3xl font-extrabold text-blue-600 mb-2 tracking-tight">
+              Questify
+            </div>
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
+              Student Registration
+            </h2>
+            
+            {/* Registration Disabled Message */}
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6 mb-6">
+              <div className="flex items-center justify-center mb-4">
+                <svg className="w-16 h-16 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Registration Currently Unavailable</h3>
+              <p className="text-gray-700 mb-4">
+                Student registration is temporarily disabled. All student accounts are being managed by administrators.
+              </p>
+              <div className="bg-white rounded-lg p-4 border border-yellow-300">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>If you are a student:</strong>
+                </p>
+                <ul className="text-sm text-gray-600 space-y-1 text-left">
+                  <li>• Your account has been created by your administrator</li>
+                  <li>• You should have received your login credentials</li>
+                  <li>• Please use the login page to access your account</li>
+                  <li>• Contact your administrator if you need assistance</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Login Link */}
+            <div className="text-center">
+              <Link 
+                to="/login" 
+                className="inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out shadow-lg hover:shadow-xl"
+              >
+                Go to Login Page
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* COMMENTED OUT: Registration Form - Will be enabled later when needed */}
+        {/* 
         <div className="w-full lg:w-1/2 p-6 sm:p-10 md:p-16 flex flex-col justify-center animate-fadeInLeft">
           <div className="text-center lg:text-left">
             <div className="text-3xl font-extrabold text-blue-600 mb-2 tracking-tight">
@@ -115,7 +162,7 @@ const Register = () => {
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
 
             {/* Name Input */}
-            <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
+            {/* <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
               </label>
@@ -130,10 +177,10 @@ const Register = () => {
                 className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
                 placeholder="John Doe"
               />
-            </div>
+            </div> */}
 
             {/* Email Input */}
-            <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
+            {/* <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
@@ -148,10 +195,10 @@ const Register = () => {
                 className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
                 placeholder="your.email@example.com"
               />
-            </div>
+            </div> */}
 
             {/* Student Card Number Input */}
-            <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
+            {/* <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
               <label htmlFor="admissionNo" className="block text-sm font-medium text-gray-700 mb-2">
                 Student Card Number
               </label>
@@ -166,10 +213,10 @@ const Register = () => {
                 className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
                 placeholder="Enter your student card number"
               />
-            </div>
+            </div> */}
 
             {/* Password Input */}
-            <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
+            {/* <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
@@ -185,10 +232,10 @@ const Register = () => {
                 placeholder="••••••••"
               />
               <p className="text-xs text-gray-600 mt-1">Minimum 6 characters</p>
-            </div>
+            </div> */}
 
             {/* Confirm Password Input */}
-            <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
+            {/* <div className="relative transform transition-all duration-300 hover:scale-[1.01]">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
@@ -203,20 +250,17 @@ const Register = () => {
                 className="w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm"
                 placeholder="••••••••"
               />
-            </div>
-
-            {/* Role Information */}
-            
+            </div> */}
 
             {/* Error Messages */}
-            {(validationError || error) && (
+            {/* {(validationError || error) && (
               <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm animate-pulse">
                 {validationError || error}
               </div>
-            )}
+            )} */}
 
             {/* Register Button */}
-            <div className="pt-4">
+            {/* <div className="pt-4">
               <button
                 type="submit"
                 disabled={loading}
@@ -224,31 +268,38 @@ const Register = () => {
               >
                 {loading ? 'Creating Student Account...' : 'Create Student Account'}
               </button>
-            </div>
+            </div> */}
 
             {/* Login Link */}
-            <p className="text-center text-sm text-gray-600">
+            {/* <p className="text-center text-sm text-gray-600">
               Already have an account?{' '}
               <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700">
                 Sign in here
               </Link>
-            </p>
-          </form>
-        </div>
+            </p> */}
+          {/* </form>
+        </div> */}
+        {/* END OF COMMENTED OUT FORM */}
 
         {/* Right Side: Image (Hidden on Mobile) */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-500 to-blue-700 relative overflow-hidden items-center justify-center">
           <img
             src={REGISTER_IMAGE_URL}
-            alt="Register illustration"
+            alt=""
             className="w-full h-full object-cover opacity-80"
+            onError={(e) => { e.target.style.display = 'none'; }}
           />
           <div className="absolute inset-0 bg-blue-600 opacity-40"></div>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center p-8">
-            <h3 className="text-4xl font-bold mb-4">Join as a Student</h3>
-            <p className="text-lg opacity-90">
-              Start your learning journey with our interactive quiz platform
+            <h3 className="text-4xl font-bold mb-4">Questify Learning Platform</h3>
+            <p className="text-lg opacity-90 mb-4">
+              Interactive quiz platform for enhanced learning experiences
             </p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 max-w-md">
+              <p className="text-sm">
+                All student accounts are managed by administrators to ensure secure and organized access to the platform.
+              </p>
+            </div>
           </div>
         </div>
       </div>
