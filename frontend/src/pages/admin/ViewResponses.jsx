@@ -91,6 +91,25 @@ const ViewResponses = () => {
     }
   }
 
+  const handleExportNonParticipantsPDFSimple = async (assignmentId) => {
+    try {
+      const response = await api.get(`/admin/assignments/${assignmentId}/non-participants/pdf-simple`)
+      
+      // Open in new window to allow browser's print-to-PDF
+      const printWindow = window.open('', '_blank')
+      printWindow.document.write(response.data)
+      printWindow.document.close()
+      
+      // Wait a bit for content to load, then trigger print dialog
+      setTimeout(() => {
+        printWindow.print()
+      }, 500)
+    } catch (error) {
+      console.error('Export PDF failed:', error)
+      alert('Failed to export PDF. Please try again.')
+    }
+  }
+
   const fetchLiveProgress = async (assignmentId) => {
     try {
       setLoadingLiveProgress(prev => ({ ...prev, [assignmentId]: true }))
@@ -820,6 +839,15 @@ const ViewResponses = () => {
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                     </svg>
                                     Export PDF
+                                  </button>
+                                  <button
+                                    onClick={() => handleExportNonParticipantsPDFSimple(quiz.id)}
+                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                    </svg>
+                                    Export PDF (Name & ID Only)
                                   </button>
                                 </div>
                               )}
