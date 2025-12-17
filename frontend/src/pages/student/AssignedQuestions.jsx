@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import api from '../../services/api';
+import api, { resetNetworkSession, getCurrentNetworkMetrics } from '../../services/api';
 
 const AssignedQuestions = () => {
   const [assignments, setAssignments] = useState([]);
@@ -92,6 +92,9 @@ const AssignedQuestions = () => {
       return;
     }
     
+    // Reset network session for new quiz
+    resetNetworkSession();
+    
     setActiveQuiz(assignment);
     setCurrentQuestionIndex(0);
     setResponses({});
@@ -132,6 +135,7 @@ const AssignedQuestions = () => {
       setError('');
 
       const startTime = startTimes[question.questionId];
+      const currentMetrics = getCurrentNetworkMetrics();
       
       await api.post('/students/submit-answer', {
         questionId: question.questionId,
@@ -140,7 +144,8 @@ const AssignedQuestions = () => {
         startTime: startTime,
         assignmentId: activeQuiz.assignmentId,
         currentQuestionIndex: currentQuestionIndex,
-        totalQuestions: activeQuiz.questions.length
+        totalQuestions: activeQuiz.questions.length,
+        networkMetrics: currentMetrics
       });
 
       // Move to next question
