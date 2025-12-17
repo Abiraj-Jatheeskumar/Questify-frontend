@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import api from '../../services/api';
+import api, { resetNetworkSession, getCurrentNetworkMetrics } from '../../services/api';
 
 const AssignedQuestions = () => {
   const [assignments, setAssignments] = useState([]);
@@ -92,6 +92,9 @@ const AssignedQuestions = () => {
       return;
     }
     
+    // Reset network tracking for new quiz session
+    resetNetworkSession();
+    
     setActiveQuiz(assignment);
     setCurrentQuestionIndex(0);
     setResponses({});
@@ -133,14 +136,22 @@ const AssignedQuestions = () => {
 
       const startTime = startTimes[question.questionId];
       
-      await api.post('/students/submit-answer', {
+      // Get current network metrics from session state (jitter/stability are accurate)
+      // RTT will be from previous request (will be updated after this request completes)
+      const currentMetrics = getCurrentNetworkMetrics();
+      
+      // Make the request - network metrics are included in request body
+      const response = await api.post('/students/submit-answer', {
         questionId: question.questionId,
         selectedAnswer,
         classId: question.classId,
         startTime: startTime,
         assignmentId: activeQuiz.assignmentId,
         currentQuestionIndex: currentQuestionIndex,
-        totalQuestions: activeQuiz.questions.length
+        totalQuestions: activeQuiz.questions.length,
+        // Include network metrics (jitter/stability from session, RTT from previous request)
+        // After this request completes, metrics will be updated for next request
+        networkMetrics: currentMetrics
       });
 
       // Move to next question
