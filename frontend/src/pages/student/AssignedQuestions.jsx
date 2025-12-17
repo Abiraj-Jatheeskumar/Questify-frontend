@@ -137,7 +137,7 @@ const AssignedQuestions = () => {
       const startTime = startTimes[question.questionId];
       const currentMetrics = getCurrentNetworkMetrics();
       
-      await api.post('/students/submit-answer', {
+      const response = await api.post('/students/submit-answer', {
         questionId: question.questionId,
         selectedAnswer,
         classId: question.classId,
@@ -147,6 +147,27 @@ const AssignedQuestions = () => {
         totalQuestions: activeQuiz.questions.length,
         networkMetrics: currentMetrics
       });
+      
+      // Update with actual RTT from response if available (especially important for first question)
+      // The response.networkMetrics contains the actual measured RTT for this request
+      // This ensures we save the real network metrics, not the pre-request estimate
+      if (response.data?.response?._id && response.networkMetrics?.rtt_ms !== undefined) {
+        const actualMetrics = response.networkMetrics;
+        const responseId = response.data.response._id;
+        
+        // Only update if we have actual RTT (avoid unnecessary calls when RTT is already correct)
+        if (actualMetrics.rtt_ms !== null && actualMetrics.rtt_ms !== currentMetrics.rtt_ms) {
+          try {
+            // Update the saved response with actual network metrics
+            await api.patch(`/students/response/${responseId}/network-metrics`, {
+              networkMetrics: actualMetrics
+            });
+          } catch (updateError) {
+            // Don't block the flow if update fails - it's not critical
+            console.warn('Failed to update network metrics:', updateError);
+          }
+        }
+      }
 
       // Move to next question
       if (currentQuestionIndex < activeQuiz.questions.length - 1) {
