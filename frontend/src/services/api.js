@@ -34,72 +34,70 @@ export const resetNetworkSession = () => {
   latestNetworkMetrics = null
 }
 
-// Get current network metrics
+// Get current network metrics from session state (for including in requests)
 export const getCurrentNetworkMetrics = () => {
-  return latestNetworkMetrics || {
-    rtt_ms: null,
-    jitter_ms: null,
-    stability_percent: null,
-    network_quality: null
+  // Calculate metrics from current session state
+  // Note: RTT will be calculated after request, but jitter/stability are accurate
+  const lastRtt = networkSession.rttHistory.length > 0 
+    ? networkSession.rttHistory[networkSession.rttHistory.length - 1] 
+    : 0
+  const jitter_ms = calculateJitter(networkSession.rttHistory)
+  const stability_percent = calculateStability(networkSession.requestStats)
+  const network_quality = calculateNetworkQuality(lastRtt, jitter_ms, stability_percent)
+  
+  return {
+    rtt_ms: lastRtt, // Will be updated after request completes
+    jitter_ms,
+    stability_percent,
+    network_quality
   }
 }
 
-// Calculate jitter (variation in RTT)
-const calculateJitter = (rttHistory) => {
-  if (rttHistory.length < 2) return null
-  
+// Calculate jitter from RTT history
+const calculateJitter = (history) => {
+  if (history.length < 2) return 0
   const differences = []
-  for (let i = 1; i < rttHistory.length; i++) {
-    differences.push(Math.abs(rttHistory[i] - rttHistory[i - 1]))
+  for (let i = 1; i < history.length; i++) {
+    differences.push(Math.abs(history[i] - history[i - 1]))
   }
-  
-  if (differences.length === 0) return null
-  
-  const avgJitter = differences.reduce((sum, diff) => sum + diff, 0) / differences.length
-  return Math.round(avgJitter * 100) / 100 // Round to 2 decimal places
+  const jitter = differences.reduce((sum, diff) => sum + diff, 0) / differences.length
+  return Math.round(jitter)
 }
 
-// Calculate stability percentage (inverse of coefficient of variation)
-const calculateStability = (rttHistory) => {
-  if (rttHistory.length < 2) return null
-  
-  const mean = rttHistory.reduce((sum, rtt) => sum + rtt, 0) / rttHistory.length
-  if (mean === 0) return 100
-  
-  const variance = rttHistory.reduce((sum, rtt) => sum + Math.pow(rtt - mean, 2), 0) / rttHistory.length
-  const stdDev = Math.sqrt(variance)
-  const coefficientOfVariation = stdDev / mean
-  
-  // Convert to stability percentage (lower CV = higher stability)
-  // Scale: CV 0 = 100%, CV 1 = 0%
-  const stability = Math.max(0, Math.min(100, (1 - coefficientOfVariation) * 100))
-  return Math.round(stability * 100) / 100
+// Calculate stability percentage (based on request success rate)
+const calculateStability = (stats) => {
+  if (stats.total === 0) return 100
+  return Math.round((stats.successful / stats.total) * 100 * 100) / 100 // 2 decimals
 }
 
-// Classify network quality based on RTT and jitter
-const calculateNetworkQuality = (rtt_ms, jitter_ms) => {
-  if (rtt_ms === null || rtt_ms === undefined) return null
+// Calculate network quality (weighted scoring)
+const calculateNetworkQuality = (rtt_ms, jitter_ms, stability_percent) => {
+  const rttScore = rtt_ms < 100 ? 100 : 
+                   rtt_ms < 300 ? 90 :
+                   rtt_ms < 500 ? 75 :
+                   rtt_ms < 1000 ? 50 :
+                   rtt_ms < 2000 ? 25 : 0
   
-  // Use jitter if available, otherwise estimate based on RTT
-  const effectiveJitter = jitter_ms !== null && jitter_ms !== undefined ? jitter_ms : rtt_ms * 0.1
+  const jitterScore = jitter_ms < 50 ? 100 :
+                      jitter_ms < 100 ? 90 :
+                      jitter_ms < 200 ? 75 :
+                      jitter_ms < 500 ? 50 : 0
   
-  if (rtt_ms < 100 && effectiveJitter < 30) {
-    return 'Excellent'
-  } else if (rtt_ms < 200 && effectiveJitter < 50) {
-    return 'Good'
-  } else if (rtt_ms < 400 && effectiveJitter < 100) {
-    return 'Fair'
-  } else {
-    return 'Poor'
-  }
+  const stabilityScore = stability_percent
+  const overallScore = (rttScore * 0.3) + (jitterScore * 0.2) + (stabilityScore * 0.5)
+  
+  if (overallScore >= 90) return 'Excellent'
+  if (overallScore >= 75) return 'Good'
+  if (overallScore >= 60) return 'Fair'
+  return 'Poor'
 }
 
 // Calculate all network metrics
-const calculateNetworkMetrics = (currentRtt) => {
-  const rtt_ms = currentRtt !== null && currentRtt !== undefined ? Math.round(currentRtt) : null
+const calculateNetworkMetrics = (currentRtt_ms) => {
+  const rtt_ms = currentRtt_ms
   const jitter_ms = calculateJitter(networkSession.rttHistory)
-  const stability_percent = calculateStability(networkSession.rttHistory)
-  const network_quality = calculateNetworkQuality(rtt_ms, jitter_ms)
+  const stability_percent = calculateStability(networkSession.requestStats)
+  const network_quality = calculateNetworkQuality(rtt_ms, jitter_ms, stability_percent)
   
   return {
     rtt_ms,
